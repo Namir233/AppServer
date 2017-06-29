@@ -1,0 +1,54 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>一起狼人杀ipa提交</title>
+    
+    <link rel="icon" href="/Wolf/icon.png" type="image/x-icon" />
+    <link rel="shortcut icon" href="/Wolf/icon.png" type="image/x-icon"/>
+
+    <!-- Bootstrap core CSS -->
+    <link href="/res/css/bootstrap.min.css" rel="stylesheet"/>
+    <!-- Bootstrap theme -->
+    <link href="/res/css/bootstrap-theme.min.css" rel="stylesheet"/>
+
+    <link href="/res/css/fileinput.min.css" media="all" rel="stylesheet" type="text/css" />
+    <link href="/res/themes/explorer/theme.css" media="all" rel="stylesheet" type="text/css"/>
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="https://cdn.bootcss.com/jquery/2.1.1/jquery.min.js"></script>
+    <!-- piexif.min.js is only needed for restoring exif data in resized images and when you wish to resize images before upload. This must be loaded before fileinput.min.js -->
+    <script src="/res/js/plugins/piexif.min.js" type="text/javascript"></script>
+    <!-- sortable.min.js is only needed if you wish to sort / rearrange files in initial preview. This must be loaded before fileinput.min.js -->
+    <script src="/res/js/plugins/sortable.min.js" type="text/javascript"></script>
+    <!-- purify.min.js is only needed if you wish to purify HTML content in your preview for HTML files. This must be loaded before fileinput.min.js -->
+    <script src="/res/js/plugins/purify.min.js" type="text/javascript"></script>
+    <!-- the main fileinput plugin file -->
+    <script src="/res/js/fileinput.min.js"></script>
+    <!-- bootstrap.js below is needed if you wish to zoom and view file content in a larger detailed modal dialog -->
+    <script src="/res/themes/explorer/theme.js" type="text/javascript"></script>
+</head>
+<body>
+    <h1 align="center">一起狼人杀ipa提交</h1>
+    <form role="form" align="center" enctype="multipart/form-data">
+        <div class="from-group">
+            <input type="file" id="fileToUpload" class="file" data-overwrite-initial="false" data-min-file-count="1">
+        </div>
+    </form>
+    <!-- Include all compiled plugins (below), or include individual files as needed -->
+    <script src="/res/js/bootstrap.min.js"></script>
+</body>
+<script>
+   $('#fileToUpload').fileinput({
+        uploadUrl: 'upload',
+        showRemove : false,
+        language : 'zh',
+        allowedFileExtensions: ['ipa'],
+   }).on('fileselect', function(event, numFiles, label) {
+        $('#fileToUpload').fileinput('upload');
+   }).on('fileuploaded', function(event, numFiles, label) {
+        window.location.href = '/Wolf'
+   })
+</script>
+</html>

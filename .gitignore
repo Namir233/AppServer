@@ -76,3 +76,4 @@ Pods/
 Carthage/Build
 
 # End of https://www.gitignore.io/api/swift
+AppServer.xcodeproj

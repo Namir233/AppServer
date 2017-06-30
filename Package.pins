@@ -48,18 +48,6 @@
       "reason": null,
       "repositoryURL": "https://github.com/PerfectlySoft/Perfect-Thread.git",
       "version": "2.0.12"
-    },
-    {
-      "package": "PerfectZip",
-      "reason": null,
-      "repositoryURL": "https://github.com/PerfectlySoft/Perfect-Zip.git",
-      "version": "2.0.3"
-    },
-    {
-      "package": "minizip",
-      "reason": null,
-      "repositoryURL": "https://github.com/iamjono/minizip.git",
-      "version": "0.1.1"
     }
   ],
   "version": 1

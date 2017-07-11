@@ -11,16 +11,17 @@ import PerfectLib
 import PerfectHTTP
 import PerfectHTTPServer
 import PerfectMustache
+import PerfectZip
 
 var ipaInfo: [String: Any]? = nil
-//let workDir: String = File("/Users/namir/server/AppServer/").realPath
-let workDir: String = File("~/server/AppServer/").realPath
+let workDir: String = File("/Users/namir/server/AppServer/").realPath
+//let workDir: String = File("~/server/AppServer/").realPath
 
 var routes = Routes()
-routes.add(method: .get, uri: "/") { (request, response) in
-    request.path = "/index.html"
-    StaticFileHandler(documentRoot: workDir + "Static").handleRequest(request: request, response: response)
-}
+//routes.add(method: .get, uri: "/") { (request, response) in
+//    request.path = "/index.html"
+//    StaticFileHandler(documentRoot: workDir + "Static").handleRequest(request: request, response: response)
+//}
 
 routes.add(method: .get, uri: "/res/**") { (request, response) in
     let path = request.path
@@ -78,41 +79,45 @@ struct WolfHandler: MustachePageHandler {
 }
 
 let wolfIndexHander = { (request, response) in
-    mustacheRequest(request: request, response: response, handler: WolfHandler(), templatePath: workDir + "Mustache/wolf.html")
+    mustacheRequest(request: request, response: response, handler: WolfHandler(), templatePath: workDir + "Mustache/list.html")
 }
 
-routes.add(method: .get, uri: "/Wolf", handler: wolfIndexHander)
+routes.add(method: .get, uri: "/", handler: IPAManager.listHandler)
+
+routes.add(method: .get, uri: "/Upload") { (request, response) in
+    request.path = "/upload.html"
+    StaticFileHandler(documentRoot: workDir + "Static").handleRequest(request: request, response: response)
+}
+routes.add(method: .post, uri: "/Upload", handler: IPAManager.uploadHandler)
+routes.add(method: .get, uri: "/{id}/") { (request, response) in
+    let packageName = request.urlVariables["id"] ?? ""
+    
+    if packageName == "Upload" {
+        request.path = "/upload.html"
+        StaticFileHandler(documentRoot: workDir + "Static").handleRequest(request: request, response: response)
+        return
+    }
+    
+    IPAManager.appHandler(request, response)
+}
+routes.add(method: .get, uri: "/{id}/icon") { (request, response) in
+    let packageName = request.urlVariables["id"] ?? "";
+    
+    if let ipa = IPAManager.s.ipas[packageName]?.last {
+        request.path = ipa.icon
+        StaticFileHandler(documentRoot: workDir + "Static/apps/").handleRequest(request: request, response: response)
+    } else {
+        response.setHeader(.contentType, value: "text/html")
+        response.status = .notFound
+        response.appendBody(string: "Not found")
+        response.completed()
+    }
+}
 
 routes.add(method: .get, uri: "/Wolf/api/update") { (request, response) in
     response.setHeader(.contentType, value: "text/json")
     response.appendBody(string: "{\"version\":\"\(loadIPAInfo()["CFBundleVersion"] ?? "?.?.?")\"}")
     response.completed()
-}
-
-routes.add(method: .get, uri: "/Wolf/upload") { (request, response) in
-    request.path = "/upload.html"
-    StaticFileHandler(documentRoot: workDir + "Static").handleRequest(request: request, response: response)
-}
-
-routes.add(method: .post, uri: "/Wolf/upload") { (request, response) in
-    if let uploads = request.postFileUploads, let upload = uploads.first {
-        let ipaPath = workDir + "Static/Wolf/WolfManKill.ipa"
-        let ipaFile = File(ipaPath)
-        if ipaFile.exists {
-            ipaFile.delete()
-        }
-        let uploadFile = File(upload.tmpFileName)
-        
-        do {
-            let _ = try uploadFile.moveTo(path: ipaPath)
-        } catch {
-            print(error)
-        }
-        ipaInfo = nil
-        response.setHeader(.contentType, value: "text/html")
-        response.appendBody(string: "{}")
-        response.completed()
-    }
 }
 
 routes.add(method: .get, uri: "/Wolf/**") { (request, response) in

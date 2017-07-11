@@ -41,14 +41,15 @@
 </body>
 <script>
    $('#fileToUpload').fileinput({
-        uploadUrl: 'upload',
+        uploadUrl: ' ',
         showRemove : false,
         language : 'zh',
         allowedFileExtensions: ['ipa'],
    }).on('fileselect', function(event, numFiles, label) {
         $('#fileToUpload').fileinput('upload');
-   }).on('fileuploaded', function(event, numFiles, label) {
-        window.location.href = '/Wolf'
+   }).on('fileuploaded', function(event, data, previewId, index) {
+        var response = data.response;
+        window.location.href = '/' + response["id"]
    })
 </script>
 </html>

@@ -104,7 +104,7 @@ routes.add(method: .get, uri: "/{id}/icon") { (request, response) in
     let packageName = request.urlVariables["id"] ?? "";
     
     if let ipa = IPAManager.s.ipas[packageName]?.last {
-        request.path = ipa.icon
+        request.path = "\(ipa.identifier)/\(ipa.bundleName)_\(ipa.version)/\(ipa.icon)"
         StaticFileHandler(documentRoot: workDir + "Static/apps/").handleRequest(request: request, response: response)
     } else {
         response.setHeader(.contentType, value: "text/html")

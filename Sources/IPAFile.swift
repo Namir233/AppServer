@@ -9,6 +9,7 @@
 import Foundation
 import PerfectLib
 import PerfectZip
+import AppKit.NSImage
 
 class IPAFile {
     var version: String = ""
@@ -27,8 +28,15 @@ class IPAFile {
         let appDir = Dir(file.path.deletingLastFilePathComponent + "/" + appDirName)
         if !appDir.exists {
             unzip(to: appDir)
+            let ipaInfoPlist = File(appDir.path + "files/Info.plist")
+            loadInfoFrom(plist: ipaInfoPlist)
+            let infoPlist = File(appDir.path + "Info.plist")
+            IPAFile.copyFile(from: ipaInfoPlist, to: infoPlist)
+            IPAFile.copyImage(from: File(appDir.path + "files/" + icon), to: File(appDir.path + "icon.png"))
+            icon = "icon.png"
+        } else {
+            loadInfoFrom(plist: File(appDir.path + "Info.plist"))
         }
-        loadInfoFrom(plist: File(appDir.path + "Info.plist"))
     }
     
     convenience init?(tempFile: File) {
@@ -51,13 +59,14 @@ class IPAFile {
 
     func unzip(to dir: Dir) {
         let zippy = Zip()
-        let tempFile = Dir(file.path + "_temp")
-        let unZipResult = zippy.unzipFile(source: file.path, destination: tempFile.path, overwrite: true)
+        let tempDir = Dir(dir.path + "temp")
+        let ipaDir = File(dir.path + "files")
+        let unZipResult = zippy.unzipFile(source: file.path, destination: tempDir.path, overwrite: true)
         guard unZipResult == .ZipSuccess else {
             return
         }
         
-        let payLoadDir = Dir(tempFile.path + "Payload")
+        let payLoadDir = Dir(tempDir.path + "Payload")
         guard payLoadDir.exists else {
             return
         }
@@ -72,8 +81,46 @@ class IPAFile {
             return
         }
         
-        IPAFile.copyFile(from: File(appDir!.path), to: File(dir.path))
-        try? tempFile.delete()
+        do {
+            let _ = try File(appDir!.path).moveTo(path: ipaDir.path)
+        } catch {
+            print(error)
+        }
+        
+        IPAFile.deleteFile(File(tempDir.path))
+    }
+    
+    static func copyImage(from: File, to: File) {
+        guard let image = NSImage(contentsOfFile: from.path) else {
+            return
+        }
+        guard let imageData = image.tiffRepresentation else {
+            return
+        }
+        guard let rep = NSBitmapImageRep(data: imageData) else {
+            return
+        }
+        guard let savaData = rep.representation(using: .PNG, properties: [:]) else {
+            return
+        }
+        try? savaData.write(to: URL(fileURLWithPath: to.path))
+    }
+    
+    static func deleteFile(_ file: File) {
+        if file.isDir {
+            let dir = Dir(file.path)
+            do {
+                try dir.forEachEntry(closure: { (name) in
+                    deleteFile(File(file.path + name))
+                })
+                try dir.delete()
+            } catch {
+                print("delete \(file.path)  failed")
+                print(error)
+            }
+        } else {
+            file.delete()
+        }
     }
     
     static func copyFile(from: File, to: File) {
@@ -141,8 +188,7 @@ class IPAFile {
             version = dict["CFBundleVersion"] as? String ?? "Unkown"
             identifier = dict["CFBundleIdentifier"] as? String ?? "Unkown"
             bundleName = dict["CFBundleName"] as? String ?? "Unkown"
-            let iconName = loadIconFrom(dir: Dir(plist.path.deletingLastFilePathComponent), dict: dict)
-            icon = "\(identifier)/\(bundleName)_\(version)/\(iconName)"
+            icon = loadIconFrom(dir: Dir(plist.path.deletingLastFilePathComponent), dict: dict)
             exists = true
             v = Version(version)
         }
@@ -161,4 +207,5 @@ class IPAFile {
             return iconFile.path.lastFilePathComponent
         }
     }
+    
 }

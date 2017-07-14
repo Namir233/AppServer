@@ -58,7 +58,17 @@ class IPAManager {
     struct ListHandler: MustachePageHandler {
         func extendValuesForResponse(context contxt: MustacheWebEvaluationContext, collector: MustacheEvaluationOutputCollector) {
             var values = MustacheEvaluationContext.MapType()
-            values["ipas"] = IPAManager.s.ipas.map { (k, v) in ["id": k, "name":v.first!.bundleName]}
+            values["ipas"] = IPAManager.s.ipas.map { (k, v) -> Any in
+                let ipa = v.last!
+                var values: [String: Any] = [:]
+                values["identifier"] = k
+                values["name"] = ipa.displayName
+                values["version"] = ipa.version
+                values["icon"] = ipa.identifier + "/icon"
+                values["time"] = ipa.time.toShortString()
+                values["plistUrl"] = "https%3A%2F%2F"
+                return values
+            }
             contxt.extendValues(with: values)
             do {
                 try contxt.requestCompleted(withCollector: collector)
@@ -82,9 +92,12 @@ class IPAManager {
             
             if let ipa = IPAManager.s.ipas[packageName]?.last {
                 var values = MustacheEvaluationContext.MapType()
+                values["identifier"] = ipa.identifier
                 values["name"] = ipa.displayName
                 values["version"] = ipa.version
                 values["icon"] = ipa.identifier + "/icon"
+                values["time"] = ipa.time.toShortString()
+                values["plistUrl"] = "https%3A%2F%2F"  // TODO
                 contxt.extendValues(with: values)
                 
                 do {

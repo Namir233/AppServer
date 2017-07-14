@@ -20,6 +20,7 @@ class IPAFile {
     var file: File
     var exists: Bool = false
     var v: Version!
+    var time: Date!
     
     init(file: File) {
         self.file = file
@@ -189,6 +190,7 @@ class IPAFile {
             identifier = dict["CFBundleIdentifier"] as? String ?? "Unkown"
             bundleName = dict["CFBundleName"] as? String ?? "Unkown"
             icon = loadIconFrom(dir: Dir(plist.path.deletingLastFilePathComponent), dict: dict)
+            time = Date(timeIntervalSince1970: TimeInterval(file.modificationTime))
             exists = true
             v = Version(version)
         }

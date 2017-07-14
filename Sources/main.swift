@@ -18,23 +18,12 @@ let workDir: String = File("/Users/namir/server/AppServer/").realPath
 //let workDir: String = File("~/server/AppServer/").realPath
 
 var routes = Routes()
-//routes.add(method: .get, uri: "/") { (request, response) in
-//    request.path = "/index.html"
-//    StaticFileHandler(documentRoot: workDir + "Static").handleRequest(request: request, response: response)
-//}
 
 routes.add(method: .get, uri: "/res/**") { (request, response) in
     let path = request.path
     let index = path.index(path.startIndex, offsetBy: 4)
     request.path = path.substring(from: index)
     StaticFileHandler(documentRoot: workDir + "Resource").handleRequest(request: request, response: response)
-}
-
-routes.add(method: .get, uri: "/files/**") { (request, response) in
-    let path = request.path
-    let index = path.index(path.startIndex, offsetBy: 6)
-    request.path = path.substring(from: index)
-    StaticFileHandler(documentRoot: workDir + "Static").handleRequest(request: request, response: response)
 }
 
 func runCommand(launchPath: String, arguments: [String]) -> String {
@@ -49,37 +38,6 @@ func runCommand(launchPath: String, arguments: [String]) -> String {
     
     let data = file.readDataToEndOfFile()
     return String(data: data, encoding: .utf8)!
-}
-
-func loadIPAInfo() -> [String: Any] {
-    if ipaInfo == nil {
-        let result = runCommand(launchPath: "/usr/bin/python", arguments: [workDir + "Static/Wolf/ipa_plist.py", workDir + "Static/Wolf/WolfManKill.ipa"])
-        let data = result.data(using: .utf8)!
-        
-        let jsonObj = try? JSONSerialization.jsonObject(with: data, options: .mutableContainers)
-        ipaInfo = jsonObj != nil ? jsonObj! as? [String: Any] : nil
-    }
-    return ipaInfo ?? [:]
-}
-
-struct WolfHandler: MustachePageHandler {
-    func extendValuesForResponse(context contxt: MustacheWebEvaluationContext, collector: MustacheEvaluationOutputCollector) {
-        var values = MustacheEvaluationContext.MapType()
-        values["version"] = loadIPAInfo()["CFBundleVersion"] ?? "?.?.?"
-        contxt.extendValues(with: values)
-        do {
-            try contxt.requestCompleted(withCollector: collector)
-        } catch {
-            let response = contxt.webResponse
-            response.status = .internalServerError
-            response.appendBody(string: "\(error)")
-            response.completed()
-        }
-    }
-}
-
-let wolfIndexHander = { (request, response) in
-    mustacheRequest(request: request, response: response, handler: WolfHandler(), templatePath: workDir + "Mustache/list.html")
 }
 
 routes.add(method: .get, uri: "/", handler: IPAManager.listHandler)
@@ -100,6 +58,7 @@ routes.add(method: .get, uri: "/{id}/") { (request, response) in
     
     IPAManager.appHandler(request, response)
 }
+
 routes.add(method: .get, uri: "/{id}/icon") { (request, response) in
     let packageName = request.urlVariables["id"] ?? "";
     
@@ -114,17 +73,18 @@ routes.add(method: .get, uri: "/{id}/icon") { (request, response) in
     }
 }
 
-routes.add(method: .get, uri: "/Wolf/api/update") { (request, response) in
-    response.setHeader(.contentType, value: "text/json")
-    response.appendBody(string: "{\"version\":\"\(loadIPAInfo()["CFBundleVersion"] ?? "?.?.?")\"}")
-    response.completed()
-}
-
-routes.add(method: .get, uri: "/Wolf/**") { (request, response) in
-    if request.path == "/Wolf/" {
-        wolfIndexHander(request, response)
+routes.add(method: .get, uri: "/api/{id}/version") { (request, response) in
+    let packageName = request.urlVariables["id"] ?? "";
+    
+    if let ipa = IPAManager.s.ipas[packageName]?.last {
+        response.setHeader(.contentType, value: "text/json")
+        response.appendBody(string: "{\"version\":\"\(ipa.version)\"}")
+        response.completed()
     } else {
-        StaticFileHandler(documentRoot: workDir + "Static").handleRequest(request: request, response: response)
+        response.setHeader(.contentType, value: "text/html")
+        response.status = .notFound
+        response.appendBody(string: "Not found")
+        response.completed()
     }
 }
 

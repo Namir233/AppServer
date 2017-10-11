@@ -130,16 +130,11 @@ server.serverPort = 8055
 //server.serverAddress = "namir.wang"
 //server.ssl = (sslCert: "/Users/namir/certificate/2_namir.wang.crt", sslKey: "/Users/namir/certificate/3_namir.wang.key");
 
-IPAFile.test()
+do {
+    // Launch the servers based on the configuration data.
+    try server.start()
+} catch {
+    print(error)
+    fatalError("\(error)") // fatal error launching one of the servers
+}
 
-RunLoop.current.run()
-
-//
-//
-//do {
-//    // Launch the servers based on the configuration data.
-//    try server.start()
-//} catch {
-//    print(error)
-//    fatalError("\(error)") // fatal error launching one of the servers
-//}

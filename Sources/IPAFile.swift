@@ -190,7 +190,13 @@ class IPAFile {
             version = dict["CFBundleVersion"] as? String ?? "Unkown"
             identifier = dict["CFBundleIdentifier"] as? String ?? "Unkown"
             bundleName = dict["CFBundleName"] as? String ?? "Unkown"
-            icon = loadIconFrom(dir: Dir(plist.path.deletingLastFilePathComponent), dict: dict)
+            var dir = Dir(plist.path.deletingLastFilePathComponent)
+            var iconFile = File(dir.path + "icon.png")
+            if iconFile.exists {
+                icon = "icon.png"
+            } else {
+                icon = loadIconFrom(dir: dir, dict: dict)
+            }
             time = Date(timeIntervalSince1970: TimeInterval(file.modificationTime))
             exists = true
             v = Version(version)
@@ -209,51 +215,5 @@ class IPAFile {
             iconFile = File(dir.path + iconName + "@2x.png")
             return iconFile.path.lastFilePathComponent
         }
-    }
-    
-    static func getFile() {
-        let fileName = "Tiantian_nami.plist"
-        let url = URL(string: "https://file-1253689418.cosgz.myqcloud.com/\(fileName)")!
-        let time = Int(Date().timeIntervalSince1970)
-        let timeStr = "\(time);\(time + 60 * 60)"
-        let authorization = "q-sign-algorithm=sha1&q-ak=AKIDIPIxNaVIo69xWrpqUt40hAON8dtuxART&q-sign-time=\(timeStr)&q-key-time=\(timeStr)&q-header-list=content-type;host&q-url-param-list=&q-signature=\(signature(timeStr: timeStr, fileName: fileName, method: "delete"))"
-        Alamofire.request(url, method: .delete, parameters: nil, headers: ["Content-Type": "text/plain", "Host": "file-1253689418.cosgz.myqcloud.com", "Authorization": authorization]).response { (response) in
-            print(response)
-        }
-    }
-    
-    static func postFileToQCloud() {
-        let fileName = "test.txt"
-        let url = URL(string: "https://file-1253689418.cosgz.myqcloud.com/\(fileName)")!
-        let data = "12345678".data(using: .utf8)!
-        let time = Int(Date().timeIntervalSince1970)
-        let timeStr = "\(time);\(time + 60 * 60)"
-        let authorization = "q-sign-algorithm=sha1&q-ak=AKIDIPIxNaVIo69xWrpqUt40hAON8dtuxART&q-sign-time=\(timeStr)&q-key-time=\(timeStr)&q-header-list=content-type;host&q-url-param-list=&q-signature=\(signature(timeStr: timeStr, fileName: fileName, method: "put"))"
-        Alamofire.upload(data, to: url, method: .put, headers: ["Content-Type": "text/plain", "Host": "file-1253689418.cosgz.myqcloud.com" ,"Authorization": authorization, "Content-Length": "8"]).response { (response) in
-            print(response)
-        }
-    }
-    
-    static func signature(timeStr: String, fileName: String, method: String) -> String {
-        let signKey = hmacSha1(str: "uYw5yc080e5IGzUklX4MQFoFSQAfvvf9", key: timeStr)
-        let httpString = "\(method)\n/\(fileName)\n\ncontent-type=text/plain&host=file-1253689418.cosgz.myqcloud.com\n"
-        let stringToSign = "sha1\n\(timeStr)\n\(sha1(str: httpString))\n"
-        let sighature = hmacSha1(str: signKey, key: stringToSign)
-        return sighature
-    }
-    
-    static func test() {
-        let key = "Gu5t9xGARNpq86cd98joQYCN3Cozk1qA"
-        let str = "GETcvm.api.qcloud.com/v2/index.php?Action=DescribeInstances&Nonce=11886&Region=ap-guangzhou&SecretId=AKIDz8krbsJ5yKBZQpn74WFkmLPx3gnPhESA&Timestamp=1465185768&InstanceIds.0=ins-09dx96dg"
-        
-        print(hmacSha1(str: str, key: key))
-    }
-    
-    static func sha1(str: String) -> String {
-        return SHA1().calculate(string: str)
-    }
-    
-    static func hmacSha1(str: String, key: String) -> String {
-        return try! HMAC(key: key).authenticate(str)
     }
 }

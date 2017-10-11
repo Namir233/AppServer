@@ -95,7 +95,7 @@ class IPAManager {
                 values["identifier"] = ipa.identifier
                 values["name"] = ipa.displayName
                 values["version"] = ipa.version
-                values["icon"] = ipa.identifier + "/icon"
+                values["icon"] = "icon"
                 values["time"] = ipa.time.toShortString()
                 values["plistUrl"] = "https%3A%2F%2F"  // TODO
                 contxt.extendValues(with: values)
@@ -129,8 +129,6 @@ class IPAManager {
         } else {
             return nil
         }
-        
-        
     }
     
     func handle(ipa: IPAFile) {

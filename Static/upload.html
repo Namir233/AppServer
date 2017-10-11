@@ -49,7 +49,7 @@
         $('#fileToUpload').fileinput('upload');
    }).on('fileuploaded', function(event, data, previewId, index) {
         var response = data.response;
-        window.location.href = '/' + response["id"]
+        window.location.href = '/' + response["id"] + '/'
    })
 </script>
 </html>

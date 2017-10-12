@@ -10,7 +10,6 @@ import Foundation
 import PerfectLib
 import PerfectZip
 import AppKit.NSImage
-import Alamofire
 
 class IPAFile {
     var version: String = ""

@@ -14,8 +14,7 @@ import PerfectMustache
 import PerfectZip
 
 var ipaInfo: [String: Any]? = nil
-let workDir: String = File("/Users/namir/server/AppServer/").realPath
-//let workDir: String = File("~/server/AppServer/").realPath
+let workDir: String = File("/Library/WebServer/Documents/server/AppServer/").realPath
 
 var routes = Routes()
 
@@ -26,18 +25,11 @@ routes.add(method: .get, uri: "/res/**") { (request, response) in
     StaticFileHandler(documentRoot: workDir + "Resource").handleRequest(request: request, response: response)
 }
 
-func runCommand(launchPath: String, arguments: [String]) -> String {
-    let pipe = Pipe()
-    let file = pipe.fileHandleForReading
-    
+func runCommand(launchPath: String, arguments: [String]){
     let task = Process()
     task.launchPath = launchPath
     task.arguments = arguments
-    task.standardOutput = pipe
     task.launch()
-    
-    let data = file.readDataToEndOfFile()
-    return String(data: data, encoding: .utf8)!
 }
 
 routes.add(method: .get, uri: "/", handler: IPAManager.listHandler)

@@ -66,7 +66,7 @@ class IPAManager {
                 values["version"] = ipa.version
                 values["icon"] = ipa.identifier + "/icon"
                 values["time"] = ipa.time.toShortString()
-                values["plistUrl"] = "https%3A%2F%2F"
+                values["plistUrl"] = "https%3A%2F%2F"  // TODO
                 return values
             }
             contxt.extendValues(with: values)

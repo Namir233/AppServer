@@ -47,29 +47,50 @@ routes.add(method: .get, uri: "/Upload") { (request, response) in
     StaticFileHandler(documentRoot: workDir + "Static").handleRequest(request: request, response: response)
 }
 routes.add(method: .post, uri: "/Upload", handler: IPAManager.uploadHandler)
-routes.add(method: .get, uri: "/{id}/") { (request, response) in
-    let packageName = request.urlVariables["id"] ?? ""
+
+routes.add(method: .get, uri: "/{id}/**") { (request, response) in
+    let packageName = request.urlVariables["id"] ?? "";
+    let path = request.urlVariables[routeTrailingWildcardKey] ?? "";
     
     if packageName == "Upload" {
         request.path = "/upload.html"
         StaticFileHandler(documentRoot: workDir + "Static").handleRequest(request: request, response: response)
         return
+    } else if packageName == "Static" {
+        request.path = path
+        StaticFileHandler(documentRoot: workDir + "Static").handleRequest(request: request, response: response)
+        return
+    } else if packageName == "res" {
+        request.path = path
+        StaticFileHandler(documentRoot: workDir + "Resource").handleRequest(request: request, response: response)
+        return
     }
     
-    IPAManager.appHandler(request, response)
-}
-
-routes.add(method: .get, uri: "/{id}/icon") { (request, response) in
-    let packageName = request.urlVariables["id"] ?? "";
-    
-    if let ipa = IPAManager.s.ipas[packageName]?.last {
-        request.path = "\(ipa.identifier)/\(ipa.bundleName)_\(ipa.version)/\(ipa.icon)"
-        StaticFileHandler(documentRoot: workDir + "Static/apps/").handleRequest(request: request, response: response)
+    if path == "/app" {
+        IPAManager.appHandler(request, response)
+    } else if path == "/icon" {
+        if let ipa = IPAManager.s.ipas[packageName]?.last {
+            request.path = "\(ipa.identifier)/\(ipa.bundleName)_\(ipa.version)/\(ipa.icon)"
+            StaticFileHandler(documentRoot: workDir + "Static/apps/").handleRequest(request: request, response: response)
+        } else {
+            response.setHeader(.contentType, value: "text/html")
+            response.status = .notFound
+            response.appendBody(string: "Not found")
+            response.completed()
+        }
+    } else if path == "/app.ipa" {
+        if let ipa = IPAManager.s.ipas[packageName]?.last {
+            request.path = "\(ipa.identifier)/\(ipa.bundleName)_\(ipa.version).ipa"
+            StaticFileHandler(documentRoot: workDir + "Static/apps/").handleRequest(request: request, response: response)
+        } else {
+            response.setHeader(.contentType, value: "text/html")
+            response.status = .notFound
+            response.appendBody(string: "Not found")
+            response.completed()
+        }
     } else {
-        response.setHeader(.contentType, value: "text/html")
-        response.status = .notFound
-        response.appendBody(string: "Not found")
-        response.completed()
+        request.path = "\(packageName)\(path)"
+        StaticFileHandler(documentRoot: workDir + "Static/apps/").handleRequest(request: request, response: response)
     }
 }
 

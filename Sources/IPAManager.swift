@@ -12,6 +12,7 @@ import PerfectHTTP
 import PerfectHTTPServer
 import PerfectMustache
 import PerfectZip
+import PerfectThread
 
 class IPAManager {
     static let s = IPAManager()
@@ -41,6 +42,7 @@ class IPAManager {
             let uploadFile = File(upload.tmpFileName)
             let manager = IPAManager.s
             if let ipa = manager.handleTempFile(file: uploadFile) {
+                manager.uploadToPgyer(ipa: ipa)
                 manager.handle(ipa: ipa)
                 
                 response.setHeader(.contentType, value: "text/html")
@@ -66,7 +68,7 @@ class IPAManager {
                 values["version"] = ipa.version
                 values["icon"] = ipa.identifier + "/icon"
                 values["time"] = ipa.time.toShortString()
-                values["plistUrl"] = "https%3A%2F%2F"
+                values["plistUrl"] = "https%3A%2F%2Ffile-1253689418.cosgz.myqcloud.com%2FTiantian_nami_20171012.plist"
                 return values
             }
             contxt.extendValues(with: values)
@@ -95,9 +97,9 @@ class IPAManager {
                 values["identifier"] = ipa.identifier
                 values["name"] = ipa.displayName
                 values["version"] = ipa.version
-                values["icon"] = ipa.identifier + "/icon"
+                values["icon"] = "icon"
                 values["time"] = ipa.time.toShortString()
-                values["plistUrl"] = "https%3A%2F%2F"  // TODO
+                values["plistUrl"] = "https%3A%2F%2Ffile-1253689418.cosgz.myqcloud.com%2FTiantian_nami_20171012.plist"
                 contxt.extendValues(with: values)
                 
                 do {
@@ -129,8 +131,6 @@ class IPAManager {
         } else {
             return nil
         }
-        
-        
     }
     
     func handle(ipa: IPAFile) {
@@ -152,5 +152,10 @@ class IPAManager {
         }
         array!.insert(ipa, at: index)
         ipas[ipa.identifier] = array
+    }
+    
+    func uploadToPgyer(ipa: IPAFile) {
+        runCommand(launchPath: "/usr/bin/curl", arguments: "https://w.laily.net/add -F version=\(ipa.version) -F url1=http://172.16.1.91:8055/\(ipa.identifier)/\(ipa.bundleName)_\(ipa.version).ipa -F url2=https://www.pgyer.com/yzL3".components(separatedBy: " "))
+        runCommand(launchPath: workDir + "IPAUploader", arguments: [ipa.file.realPath])
     }
 }

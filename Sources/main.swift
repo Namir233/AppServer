@@ -14,8 +14,7 @@ import PerfectMustache
 import PerfectZip
 
 var ipaInfo: [String: Any]? = nil
-let workDir: String = File("/Users/namir/server/AppServer/").realPath
-//let workDir: String = File("~/server/AppServer/").realPath
+let workDir: String = File("/Library/WebServer/Documents/server/AppServer/").realPath
 
 var routes = Routes()
 
@@ -26,18 +25,11 @@ routes.add(method: .get, uri: "/res/**") { (request, response) in
     StaticFileHandler(documentRoot: workDir + "Resource").handleRequest(request: request, response: response)
 }
 
-func runCommand(launchPath: String, arguments: [String]) -> String {
-    let pipe = Pipe()
-    let file = pipe.fileHandleForReading
-    
+func runCommand(launchPath: String, arguments: [String]){
     let task = Process()
     task.launchPath = launchPath
     task.arguments = arguments
-    task.standardOutput = pipe
     task.launch()
-    
-    let data = file.readDataToEndOfFile()
-    return String(data: data, encoding: .utf8)!
 }
 
 routes.add(method: .get, uri: "/", handler: IPAManager.listHandler)
@@ -47,29 +39,50 @@ routes.add(method: .get, uri: "/Upload") { (request, response) in
     StaticFileHandler(documentRoot: workDir + "Static").handleRequest(request: request, response: response)
 }
 routes.add(method: .post, uri: "/Upload", handler: IPAManager.uploadHandler)
-routes.add(method: .get, uri: "/{id}/") { (request, response) in
-    let packageName = request.urlVariables["id"] ?? ""
+
+routes.add(method: .get, uri: "/{id}/**") { (request, response) in
+    let packageName = request.urlVariables["id"] ?? "";
+    let path = request.urlVariables[routeTrailingWildcardKey] ?? "";
     
     if packageName == "Upload" {
         request.path = "/upload.html"
         StaticFileHandler(documentRoot: workDir + "Static").handleRequest(request: request, response: response)
         return
+    } else if packageName == "Static" {
+        request.path = path
+        StaticFileHandler(documentRoot: workDir + "Static").handleRequest(request: request, response: response)
+        return
+    } else if packageName == "res" {
+        request.path = path
+        StaticFileHandler(documentRoot: workDir + "Resource").handleRequest(request: request, response: response)
+        return
     }
     
-    IPAManager.appHandler(request, response)
-}
-
-routes.add(method: .get, uri: "/{id}/icon") { (request, response) in
-    let packageName = request.urlVariables["id"] ?? "";
-    
-    if let ipa = IPAManager.s.ipas[packageName]?.last {
-        request.path = "\(ipa.identifier)/\(ipa.bundleName)_\(ipa.version)/\(ipa.icon)"
-        StaticFileHandler(documentRoot: workDir + "Static/apps/").handleRequest(request: request, response: response)
+    if path == "/app" {
+        IPAManager.appHandler(request, response)
+    } else if path == "/icon" {
+        if let ipa = IPAManager.s.ipas[packageName]?.last {
+            request.path = "\(ipa.identifier)/\(ipa.bundleName)_\(ipa.version)/\(ipa.icon)"
+            StaticFileHandler(documentRoot: workDir + "Static/apps/").handleRequest(request: request, response: response)
+        } else {
+            response.setHeader(.contentType, value: "text/html")
+            response.status = .notFound
+            response.appendBody(string: "Not found")
+            response.completed()
+        }
+    } else if path == "/app.ipa" {
+        if let ipa = IPAManager.s.ipas[packageName]?.last {
+            request.path = "\(ipa.identifier)/\(ipa.bundleName)_\(ipa.version).ipa"
+            StaticFileHandler(documentRoot: workDir + "Static/apps/").handleRequest(request: request, response: response)
+        } else {
+            response.setHeader(.contentType, value: "text/html")
+            response.status = .notFound
+            response.appendBody(string: "Not found")
+            response.completed()
+        }
     } else {
-        response.setHeader(.contentType, value: "text/html")
-        response.status = .notFound
-        response.appendBody(string: "Not found")
-        response.completed()
+        request.path = "\(packageName)\(path)"
+        StaticFileHandler(documentRoot: workDir + "Static/apps/").handleRequest(request: request, response: response)
     }
 }
 
@@ -130,16 +143,11 @@ server.serverPort = 8055
 //server.serverAddress = "namir.wang"
 //server.ssl = (sslCert: "/Users/namir/certificate/2_namir.wang.crt", sslKey: "/Users/namir/certificate/3_namir.wang.key");
 
-IPAFile.test()
+do {
+    // Launch the servers based on the configuration data.
+    try server.start()
+} catch {
+    print(error)
+    fatalError("\(error)") // fatal error launching one of the servers
+}
 
-RunLoop.current.run()
-
-//
-//
-//do {
-//    // Launch the servers based on the configuration data.
-//    try server.start()
-//} catch {
-//    print(error)
-//    fatalError("\(error)") // fatal error launching one of the servers
-//}

@@ -186,7 +186,9 @@ class IPAFile {
     func loadInfoFrom(plist: File) {
         if let dict = NSDictionary(contentsOfFile: plist.path) as? [String: Any] {
             displayName = dict["CFBundleDisplayName"] as? String ?? "Unkown"
-            version = dict["CFBundleVersion"] as? String ?? "Unkown"
+            let shortVersion = dict["CFBundleShortVersionString"] as? String ?? "Unkown"
+            let buildVersion = dict["CFBundleVersion"] as? String ?? "Unkown"
+            version = shortVersion + buildVersion
             identifier = dict["CFBundleIdentifier"] as? String ?? "Unkown"
             bundleName = dict["CFBundleName"] as? String ?? "Unkown"
             var dir = Dir(plist.path.deletingLastFilePathComponent)
